@@ -10,7 +10,8 @@ import copy
 import ga_puyo_ as puyo
 
 args = sys.argv # コマンドライン引数受け取り
-ai = True if len(args) >= 2 else False # コマンドライン引数（=seed値）でAIモード
+ai = True
+# if len(args) >= 2 else False # コマンドライン引数（=seed値）でAIモード
 
 IND = 6 # 個体数()
 GENE = 300 # 遺伝子数()
@@ -46,7 +47,7 @@ class Game(object):
         self.i_chain = [0] * IND # 最大連鎖数
         for i in range(IND):
             for j in range(GENE):
-                self.ind[i][j] = random.randrange(24)
+                self.ind[i][j] = random.randrange(24) #実際は22状態 計算簡略のため
 
         self.player1.OFFSET = (100, 100)
         self.screen.fill((100, 100, 100),
@@ -166,6 +167,8 @@ class Game(object):
             if ai and ((not update) or self.gene_num == GENE-1):
                 update = True
                 self.i_score[self.ind_num] = self.gene_num
+
+                #世代 ぷよの個数 連鎖数
                 print(self.generation, self.i_score[self.ind_num], self.i_chain[self.ind_num])
                 if self.ind_num == IND-1:
                     random.seed(None)
@@ -179,26 +182,29 @@ class Game(object):
                             max_score = self.i_score[i]
                     elite = copy.deepcopy(self.ind[e])
                     print('best is', e)
+                    print('max_rensa is', max_chain)
+                    # print(elite)
+
                     # 次の世代に遺伝子を渡す
                     for i in range(IND):
                         if i < IND - 1: # (IND-1)個は二点交叉
-                            r1 = random.randrange(0, GENE-1)
-                            r2 = random.randrange(r1,GENE)
+                            r1 = random.randrange(0, GENE-1) # [- - - - r1 - … - - - - - - - ]
+                            r2 = random.randrange(r1,GENE)   # [- - - - r1 - … - - r2 - - - -]
                             for j in range(GENE):
                                 r = random.randrange(2)
                                 if r == 0:
-                                    if r1 < j and j < r2:
+                                    if r1 < j and j < r2:    # [- - - - r1 <elite> r2 - - - -]
                                         self.ind[i][j] = self.ind[i+1][j]
                                     else:
                                         self.ind[i][j] = elite[j]
                                 else:
-                                    if r1 < j and j < r2:
+                                    if r1 < j and j < r2:    # [<elite> r1 - … - - r2 <elite>]
                                         self.ind[i][j] = elite[j]
                                     else:
                                         self.ind[i][j] = self.ind[i+1][j]
-                            r = random.randrange(2)
+                            r = random.randrange(2) # 0～1
                             if r == 0: # 稀に変異を起こす
-                                r = random.randrange(9) + 1
+                                r = random.randrange(9) + 1 # 1～9
                                 for j in range(r):
                                     self.ind[i][random.randrange(max_score)] = random.randrange(24)
                         else: # 最良個体を１つだけ引き継ぐ
