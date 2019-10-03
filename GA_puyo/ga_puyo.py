@@ -19,7 +19,7 @@ GENE = 300 # 遺伝子数()
 class Game(object):
     SCREEN_SIZE = (640, 480)
 
-    def __init__(self): #コンストラクタ(インスタンス生成時自動で呼び出される)
+    def __init__(self): #インスタンス生成時自動呼び出し
         pygame.init() #pygameモジュール初期化
         self.screen = pygame.display.set_mode(self.SCREEN_SIZE)
 
@@ -57,26 +57,25 @@ class Game(object):
 
         self.clock = pygame.time.Clock()
 
-
     def draw(self, p):
-        x_offset, y_offset = p.OFFSET
+        #要素をチェックしカラーならば描画
+        x_offset, y_offset = p.OFFSET # (x_offset, y_offset) = (100, 100)
         for y, row in enumerate(p.puyos):
             for x, color in enumerate(row):
                 if color != " ":
                     self.screen.blit(self.gem[color], (x_offset + x*24, y_offset + y*24))
-        if p.falling:
+        if p.falling: # 落下中(?)ならば
             for i in range(2):
                 y, x = p.falling[i]["pos"]
                 if y >= 0 and x >= 0:
                     self.screen.blit(self.gem[p.falling[i]["color"]], (x_offset + x*24, y_offset + y*24))
 
-
-    def command(self): #1-24の数字を対応した操作で返す(左,右,回転)
+    def command(self):#1-24の数字を対応した操作で返す(左,右,回転)
         cmd = self.ind[self.ind_num][self.gene_num]
-        if cmd % 6 < 3: # 左
+        if cmd % 6 < 3:
             left = cmd % 6 + 1
             right = 0
-        else: # 右
+        else:
             left = 0
             right = cmd % 6 - 1
         roll = int(cmd / 6)
@@ -87,8 +86,9 @@ class Game(object):
         return left,right,roll
 
     def play(self):
-        counter = 0
+        counter = 0 #counter: 1コマあたりの動き
         while True:
+            # print(counter)
             counter += 1
 
             # exit game
@@ -98,28 +98,32 @@ class Game(object):
 
             # control puyo
             if self.player1.falling and not (counter % self.control_time):
-                keys = pygame.key.get_pressed()
-                col1, row1 = self.player1.falling[0]["pos"]
-                col2, row2 = self.player1.falling[1]["pos"]
+                keys = pygame.key.get_pressed() #全てのキーの入力状態を取得
+                col1, row1 = self.player1.falling[0]["pos"] #col1 = 0, row1 = 2
+                col2, row2 = self.player1.falling[1]["pos"] #col2 = 1, row2 = 2
                 a1 = col1 - col2
                 a2 = row1 - row2
 
+                # ゲーム終了
                 if keys[self.player1.controller["esc"]]:
                     pygame.quit()
 
                 if ai and self.player1.cmd_flag:
                     self.player1.cmd_flag = False
                     left,right,roll = self.command()
-                else:
-                    left = 0
-                    right = 0
-                    roll = 0
-                    if keys[self.player1.controller["left"]]:
-                        left = 1
-                    if keys[self.player1.controller["right"]]:
-                        right = 1
-                    if keys[self.player1.controller["roll"]]:
-                        roll = 1
+
+                #プレイヤー操作用
+                # else:
+                #     left = 0
+                #     right = 0
+                #     roll = 0
+                #     if keys[self.player1.controller["left"]]:
+                #         left = 1
+                #     if keys[self.player1.controller["right"]]:
+                #         right = 1
+                #     if keys[self.player1.controller["roll"]]:
+                #         roll = 1
+
                 while roll > 0:
                     col1, row1 = self.player1.falling[0]["pos"]
                     col2, row2 = self.player1.falling[1]["pos"]
@@ -227,7 +231,8 @@ class Game(object):
                 self.gene_num = 0
 
                 if ai:
-                    random.seed(int(args[1]))
+                    # random.seed(int(args[1]))
+                    random.seed(3) #引数を指定することで毎回同じ乱数を生成できる
                 self.player1 = puyo.Puyopuyo("") # 初期化
                 self.player1.controller = {"left":pygame.K_LEFT,
                                  "down":pygame.K_DOWN,

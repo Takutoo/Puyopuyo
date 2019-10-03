@@ -3,14 +3,14 @@
 import copy
 import random
 
-
 DEBUG = False
 
 class Puyopuyo(object):
     WIDTH = 6
     HEIGHT = 13
 
-    def __init__(self, string=None): #コンストラクタ(インスタンス生成時自動で呼び出される)
+    # インスタンス生成時自動呼び出し
+    def __init__(self, string=None):
         self.puyos = [[" " for x in range(self.WIDTH)] for y in range(self.HEIGHT)] #空の盤面を作成
         self.pre_puyos = [[" " for x in range(self.WIDTH)] for y in range(self.HEIGHT)] #空の盤面を作成
         self.score = 0
@@ -21,16 +21,19 @@ class Puyopuyo(object):
 
         row = 0
         col = 0
-        if string:
-            for color in string:
-                if color == "\n":
-                    col += 1
-                    row = 0
-                    continue
-                else:
-                    self.puyos[col][row] = color
-                    row += 1
 
+        # if string:
+        #     for color in string:
+        #         if color == "\n":
+        #             col += 1
+        #             row = 0
+        #             continue
+        #         else:
+        #             self.puyos[col][row] = color
+        #             row += 1
+
+
+    # 指定ぷよの周辺(上下左右)をチェック
     def scan(self, col, row, chained, color):
         if row < self.WIDTH-1:
             chained = self._check_neighbor(col, row+1, chained, color)
@@ -43,8 +46,11 @@ class Puyopuyo(object):
 
         return chained
 
+
+    # colorとar_colorが同色かを判定
+    # 同色ならばchainで繋げる
     def _check_neighbor(self, col, row, chained, color):
-        ar_color = self.puyos[col][row] #盤面からある1箇所を代入
+        ar_color = self.puyos[col][row]
         if color == ar_color:
             if (col, row) in chained:
                 return chained
@@ -53,6 +59,7 @@ class Puyopuyo(object):
         return chained
 
 
+    # ぷよの落下処理
     def fill(self):
         prepuyos = None
         while self.puyos != prepuyos:
@@ -63,16 +70,19 @@ class Puyopuyo(object):
                         self.puyos[col][row] = self.puyos[col-1][row]
                         self.puyos[col-1][row] = ' '
 
+
+    # 盤面からぷよを削除
     def remove_puyo(self, puyos):
         for x in puyos:
             self.puyos[x[0]][x[1]] = ' '
 
 
+    #
     def update(self):
         # in rensa processing
         if self.falling is None:
             string=''
-            puyo_to_remove = set()
+            puyo_to_remove = set() # 空のセットを生成
             self.pre_puyos = copy.deepcopy(self.puyos)
 
             if DEBUG:
@@ -80,7 +90,9 @@ class Puyopuyo(object):
                     string += ''.join(horizontal) + '\n'
                 print(string, '++++++++++++++++++++++++++')
 
-            self.fill()
+            self.fill() #ぷよの落下処理
+
+            # 盤面中に隣り合う同色のぷよが存在するかを判定
             if self.puyos == self.pre_puyos:
                 for col in range(self.HEIGHT):
                     for row in range(self.WIDTH):
@@ -90,16 +102,18 @@ class Puyopuyo(object):
                         chained = [(col, row)]
 
                         if color != ' ':
-                            chained = self.scan(col, row, chained, color)
+                            chained = self.scan(col, row, chained, color) #ぷよ周辺をチェック
 
                             if len(chained) >= 4:
                                 puyo_to_remove = puyo_to_remove.union(chained)
 
+            #連鎖判定
             if len(puyo_to_remove):
                 self.rensa += 1
                 self.max_rensa = self.rensa
                 self.remove_puyo(puyo_to_remove)
 
+            # スコア換算
             if self.puyos == self.pre_puyos:
                 self.score += 10 * self.rensa**2
                 self.rensa = 0
@@ -108,6 +122,7 @@ class Puyopuyo(object):
                 if self.puyos[0][2] != " ":
                     return False
                 else:
+                    # ネクストぷよを生成
                     self.falling = ({"color":random.choice(("R", "G", "B", "Y")),
                                      "pos":(0, 2)},
                                     {"color":random.choice(("R", "G", "B", "Y")),
@@ -116,8 +131,8 @@ class Puyopuyo(object):
                     self.cmd_flag = True
         # drop puyo
         else:
-            col1, row1 = self.falling[0]["pos"]
-            col2, row2 = self.falling[1]["pos"]
+            col1, row1 = self.falling[0]["pos"] #col1 = 0, row1 = 2
+            col2, row2 = self.falling[1]["pos"] #col2 = 1, row2 = 2
 
             # on bottom
             if (col1 == (self.HEIGHT-1) or self.puyos[col1+1][row1] != " "
